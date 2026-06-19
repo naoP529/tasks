@@ -1,7 +1,7 @@
-import { useSignIn } from '@clerk/expo';
-import { type Href, Link, useRouter } from 'expo-router';
+import { useSignIn, useSSO } from '@clerk/expo';
+import { type Href, useRouter } from 'expo-router';
 import React from 'react';
-import { Platform, Pressable, TextInput } from 'react-native';
+import { Platform, Pressable, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { createAuthStyles } from '@/components/auth-styles';
@@ -25,16 +25,17 @@ export default function SignInScreen() {
   const theme = useTheme();
   const styles = React.useMemo(() => createAuthStyles(theme), [theme]);
   const { signIn, errors, fetchStatus } = useSignIn();
+  const { startSSOFlow } = useSSO();
   const router = useRouter();
 
   const [emailAddress, setEmailAddress] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [code, setCode] = React.useState('');
+  const [googleError, setGoogleError] = React.useState<string | null>(null);
 
   const handleSubmit = async () => {
     const { error } = await signIn.password({ emailAddress, password });
     if (error) {
-      console.error(JSON.stringify(error, null, 2));
       return;
     }
 
@@ -68,92 +69,173 @@ export default function SignInScreen() {
     }
   };
 
+  const handleGoogle = async () => {
+    setGoogleError(null);
+    try {
+      const { createdSessionId, setActive } = await startSSOFlow({ strategy: 'oauth_google' });
+      if (createdSessionId && setActive) {
+        await setActive({ session: createdSessionId });
+        router.replace('/');
+      }
+    } catch (err) {
+      setGoogleError(err instanceof Error ? err.message : 'Google sign-in failed');
+    }
+  };
+
   if (signIn.status === 'needs_client_trust') {
     return (
-      <ThemedView style={styles.container}>
-        <SafeAreaView style={styles.container}>
-          <ThemedText type="title" style={styles.title}>
-            Verify your account
-          </ThemedText>
-          <TextInput
-            style={styles.input}
-            value={code}
-            placeholder="Enter verification code"
-            placeholderTextColor={theme.mutedForeground}
-            onChangeText={setCode}
-            keyboardType="numeric"
-          />
-          {errors.fields.code && (
-            <ThemedText style={styles.error}>{errors.fields.code.message}</ThemedText>
-          )}
-          <Pressable
-            style={({ pressed }) => [
-              styles.button,
-              fetchStatus === 'fetching' && styles.buttonDisabled,
-              pressed && styles.buttonPressed,
-            ]}
-            onPress={handleVerify}
-            disabled={fetchStatus === 'fetching'}>
-            <ThemedText style={styles.buttonText}>Verify</ThemedText>
-          </Pressable>
+      <ThemedView style={styles.screen}>
+        <SafeAreaView style={styles.screen}>
+          <ThemedView style={styles.logoRow}>
+            <ThemedText type="handwriting" style={styles.logoText}>
+              Logo here...
+            </ThemedText>
+          </ThemedView>
+          <View style={styles.container}>
+            <View style={styles.titleBlock}>
+              <ThemedText type="title" style={styles.title}>
+                Verify
+              </ThemedText>
+              <ThemedText style={styles.subtitle}>Enter the code we sent to your email</ThemedText>
+            </View>
+            <View style={styles.fieldGroup}>
+              <ThemedText style={styles.label}>Verification code</ThemedText>
+              <TextInput
+                style={styles.input}
+                value={code}
+                placeholder="123456"
+                placeholderTextColor={theme.mutedForeground}
+                onChangeText={setCode}
+                keyboardType="numeric"
+              />
+              {errors.fields.code && (
+                <ThemedText style={styles.error}>{errors.fields.code.message}</ThemedText>
+              )}
+            </View>
+            <View style={styles.primaryCenterRow}>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.primaryButton,
+                  fetchStatus === 'fetching' && styles.buttonDisabled,
+                  pressed && styles.buttonPressed,
+                ]}
+                onPress={handleVerify}
+                disabled={fetchStatus === 'fetching'}>
+                <ThemedText type="handwriting" style={styles.primaryButtonText}>
+                  Verify!
+                </ThemedText>
+              </Pressable>
+            </View>
+          </View>
         </SafeAreaView>
       </ThemedView>
     );
   }
 
+  const submitDisabled = !emailAddress || !password || fetchStatus === 'fetching';
+
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.container}>
-        <ThemedText type="title" style={styles.title}>
-          Sign in
-        </ThemedText>
-
-        <ThemedText style={styles.label}>Email</ThemedText>
-        <TextInput
-          style={styles.input}
-          autoCapitalize="none"
-          value={emailAddress}
-          placeholder="Enter email"
-          placeholderTextColor={theme.mutedForeground}
-          onChangeText={setEmailAddress}
-          keyboardType="email-address"
-        />
-
-        <ThemedText style={styles.label}>Password</ThemedText>
-        <TextInput
-          style={styles.input}
-          value={password}
-          placeholder="Enter password"
-          placeholderTextColor={theme.mutedForeground}
-          secureTextEntry
-          onChangeText={setPassword}
-        />
-        {errors.fields.password && (
-          <ThemedText style={styles.error}>{errors.fields.password.message}</ThemedText>
-        )}
-        {errors.global?.map((err) => (
-          <ThemedText key={err.code} style={styles.error}>
-            {err.message}
+    <ThemedView style={styles.screen}>
+      <SafeAreaView style={styles.screen}>
+        <ThemedView style={styles.logoRow}>
+          <ThemedText type="handwriting" style={styles.logoText}>
+            Logo here...
           </ThemedText>
-        ))}
-
-        <Pressable
-          style={({ pressed }) => [
-            styles.button,
-            (!emailAddress || !password || fetchStatus === 'fetching') && styles.buttonDisabled,
-            pressed && styles.buttonPressed,
-          ]}
-          onPress={handleSubmit}
-          disabled={!emailAddress || !password || fetchStatus === 'fetching'}>
-          <ThemedText style={styles.buttonText}>Continue</ThemedText>
-        </Pressable>
-
-        <ThemedView style={styles.linkRow}>
-          <ThemedText>Don&apos;t have an account?</ThemedText>
-          <Link href="/sign-up">
-            <ThemedText type="link">Sign up</ThemedText>
-          </Link>
         </ThemedView>
+
+        <View style={styles.container}>
+          <View style={styles.titleBlock}>
+            <ThemedText type="title" style={styles.title}>
+              Welcome Home!
+            </ThemedText>
+            <ThemedText style={styles.subtitle}>Login and continue your day</ThemedText>
+          </View>
+
+          <View style={styles.infoRow}>
+            <View style={styles.infoLabel}>
+              <View style={styles.infoIcon}>
+                <ThemedText style={styles.infoIconText}>i</ThemedText>
+              </View>
+              <ThemedText style={styles.infoText}>Don&apos;t have account?</ThemedText>
+            </View>
+            <Pressable
+              style={({ pressed }) => [styles.pillButton, pressed && styles.buttonPressed]}
+              onPress={() => router.push('/sign-up')}>
+              <ThemedText type="handwriting" style={styles.pillButtonText}>
+                Sign up!
+              </ThemedText>
+            </Pressable>
+          </View>
+
+          <Pressable
+            style={({ pressed }) => [styles.googleButton, pressed && styles.buttonPressed]}
+            onPress={handleGoogle}>
+            <View style={styles.googleIcon}>
+              <ThemedText style={styles.googleIconText}>G</ThemedText>
+            </View>
+            <ThemedText style={styles.googleButtonText}>Continue with Google</ThemedText>
+          </Pressable>
+          {googleError && <ThemedText style={styles.error}>{googleError}</ThemedText>}
+
+          <View style={styles.fieldGroup}>
+            <ThemedText style={styles.label}>Mail adress</ThemedText>
+            <TextInput
+              style={styles.input}
+              autoCapitalize="none"
+              value={emailAddress}
+              placeholder="Example@gmail.com"
+              placeholderTextColor={theme.mutedForeground}
+              onChangeText={setEmailAddress}
+              keyboardType="email-address"
+            />
+            {errors.fields.identifier && (
+              <ThemedText style={styles.error}>{errors.fields.identifier.message}</ThemedText>
+            )}
+          </View>
+
+          <View style={styles.fieldGroup}>
+            <ThemedText style={styles.label}>Password</ThemedText>
+            <TextInput
+              style={styles.input}
+              value={password}
+              placeholder="Password"
+              placeholderTextColor={theme.mutedForeground}
+              secureTextEntry
+              onChangeText={setPassword}
+            />
+            {errors.fields.password && (
+              <ThemedText style={styles.error}>{errors.fields.password.message}</ThemedText>
+            )}
+          </View>
+
+          {errors.global?.map((err) => (
+            <ThemedText key={err.code} style={styles.error}>
+              {err.message}
+            </ThemedText>
+          ))}
+
+          <View style={styles.forgotRow}>
+            <View style={styles.infoIcon}>
+              <ThemedText style={styles.infoIconText}>i</ThemedText>
+            </View>
+            <ThemedText style={styles.infoText}>Forgot password?</ThemedText>
+          </View>
+
+          <View style={styles.primaryRow}>
+            <Pressable
+              style={({ pressed }) => [
+                styles.primaryButton,
+                submitDisabled && styles.buttonDisabled,
+                pressed && styles.buttonPressed,
+              ]}
+              onPress={handleSubmit}
+              disabled={submitDisabled}>
+              <ThemedText type="handwriting" style={styles.primaryButtonText}>
+                Login!
+              </ThemedText>
+            </Pressable>
+          </View>
+        </View>
       </SafeAreaView>
     </ThemedView>
   );

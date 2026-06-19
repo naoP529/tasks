@@ -1,10 +1,10 @@
 import '../global.css';
 
-import { ClerkProvider } from '@clerk/expo';
+import { ClerkProvider, useAuth } from '@clerk/expo';
 import { tokenCache } from '@clerk/expo/token-cache';
 import { useFonts } from 'expo-font';
 import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
-import { Slot } from 'expo-router';
+import { Slot, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { useColorScheme } from 'react-native';
@@ -66,9 +66,27 @@ export default function RootLayout() {
     <ClerkProvider publishableKey={env.clerkPublishableKey} tokenCache={tokenCache}>
       <LocaleProvider>
         <ThemeProvider value={colorScheme === 'dark' ? NavigationDarkTheme : NavigationLightTheme}>
-          <Slot />
+          <AuthGate>
+            <Slot />
+          </AuthGate>
         </ThemeProvider>
       </LocaleProvider>
     </ClerkProvider>
   );
+}
+
+function AuthGate({ children }: { children: React.ReactNode }) {
+  const { isSignedIn, isLoaded } = useAuth();
+  const segments = useSegments();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isLoaded) return;
+    const inAuthGroup = segments[0] === '(auth)';
+    if (!isSignedIn && !inAuthGroup) {
+      router.replace('/sign-in');
+    }
+  }, [isSignedIn, isLoaded, segments, router]);
+
+  return <>{children}</>;
 }
