@@ -4,9 +4,10 @@ import React from 'react';
 import { Platform, Pressable, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { authStyles as styles } from '@/components/auth-styles';
+import { createAuthStyles } from '@/components/auth-styles';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { useTheme } from '@/hooks/use-theme';
 
 function navigateAfterAuth(
   router: ReturnType<typeof useRouter>,
@@ -21,6 +22,8 @@ function navigateAfterAuth(
 }
 
 export default function SignInScreen() {
+  const theme = useTheme();
+  const styles = React.useMemo(() => createAuthStyles(theme), [theme]);
   const { signIn, errors, fetchStatus } = useSignIn();
   const router = useRouter();
 
@@ -76,7 +79,7 @@ export default function SignInScreen() {
             style={styles.input}
             value={code}
             placeholder="Enter verification code"
-            placeholderTextColor="#666666"
+            placeholderTextColor={theme.mutedForeground}
             onChangeText={setCode}
             keyboardType="numeric"
           />
@@ -111,7 +114,7 @@ export default function SignInScreen() {
           autoCapitalize="none"
           value={emailAddress}
           placeholder="Enter email"
-          placeholderTextColor="#666666"
+          placeholderTextColor={theme.mutedForeground}
           onChangeText={setEmailAddress}
           keyboardType="email-address"
         />
@@ -121,7 +124,7 @@ export default function SignInScreen() {
           style={styles.input}
           value={password}
           placeholder="Enter password"
-          placeholderTextColor="#666666"
+          placeholderTextColor={theme.mutedForeground}
           secureTextEntry
           onChangeText={setPassword}
         />

@@ -59,3 +59,7 @@ coverage/
 
 # clerk
 .clerk/
+
+# agents
+/.claude/
+prompts/

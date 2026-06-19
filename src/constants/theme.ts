@@ -1,53 +1,73 @@
 /**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
+ * Design tokens from prompts/color_configs/
+ * Naming follows common conventions (background, foreground, card, accent, etc.)
  */
 
 import { Platform } from 'react-native';
 
+export const BlockColors = {
+  light: [
+    '#FBACA7',
+    '#FFAB82',
+    '#F9CA6D',
+    '#C2E388',
+    '#91CEB1',
+    '#98DDF0',
+    '#9DC3FB',
+    '#B7A7F9',
+    '#EFB1E7',
+  ],
+  dark: [
+    '#D56E67',
+    '#DE865A',
+    '#EBB956',
+    '#92C142',
+    '#5EAC86',
+    '#3FB0D0',
+    '#6091DB',
+    '#8F7DD7',
+    '#DA73CC',
+  ],
+} as const;
+
 export const Colors = {
   light: {
-    text: '#000000',
-    background: '#ffffff',
-    backgroundElement: '#F0F0F3',
-    backgroundSelected: '#E0E1E6',
-    textSecondary: '#60646C',
+    background: '#F5EBE1',
+    foreground: '#000000',
+    card: '#EEDCCA',
+    secondary: '#E5D4C0',
+    mutedForeground: '#6B6358',
+    border: '#E0D0BC',
+    accent: '#FF6600',
+    accentForeground: '#FFFFFF',
+    destructive: '#D56E67',
+    blocks: BlockColors.light,
   },
   dark: {
-    text: '#ffffff',
-    background: '#000000',
-    backgroundElement: '#212225',
-    backgroundSelected: '#2E3135',
-    textSecondary: '#B0B4BA',
+    background: '#282521',
+    foreground: '#CECECE',
+    card: '#3A3530',
+    secondary: '#45403A',
+    mutedForeground: '#9A9690',
+    border: '#3A3530',
+    accent: '#F99959',
+    accentForeground: '#282521',
+    destructive: '#D56E67',
+    blocks: BlockColors.dark,
   },
 } as const;
 
-export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
+export type ColorScheme = keyof typeof Colors;
+export type Theme = (typeof Colors)[ColorScheme];
+export type ThemeColor = {
+  [K in keyof Theme]: Theme[K] extends string ? K : never;
+}[keyof Theme];
 
-export const Fonts = Platform.select({
-  ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
-    sans: 'system-ui',
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
-    serif: 'ui-serif',
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
-    rounded: 'ui-rounded',
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
-    mono: 'ui-monospace',
-  },
-  default: {
-    sans: 'normal',
-    serif: 'serif',
-    rounded: 'normal',
-    mono: 'monospace',
-  },
-  web: {
-    sans: 'var(--font-display)',
-    serif: 'var(--font-serif)',
-    rounded: 'var(--font-rounded)',
-    mono: 'var(--font-mono)',
-  },
-});
+export type BlockIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
+
+export function getBlockColor(theme: Theme, index: BlockIndex): string {
+  return theme.blocks[index];
+}
 
 export const Spacing = {
   half: 2,
