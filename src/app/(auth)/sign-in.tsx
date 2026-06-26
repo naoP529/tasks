@@ -1,20 +1,20 @@
-import { useSignIn } from '@clerk/expo';
-import { type Href, Link, useRouter } from 'expo-router';
-import React from 'react';
-import { Platform, Pressable, TextInput } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSignIn } from "@clerk/expo";
+import { type Href, Link, useRouter } from "expo-router";
+import React from "react";
+import { Platform, Pressable, TextInput } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-import { createAuthStyles } from '@/components/auth-styles';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { useTheme } from '@/hooks/use-theme';
+import { createAuthStyles } from "@/components/auth-styles";
+import { ThemedText } from "@/components/themed-text";
+import { ThemedView } from "@/components/themed-view";
+import { useTheme } from "@/hooks/use-theme";
 
 function navigateAfterAuth(
   router: ReturnType<typeof useRouter>,
   decorateUrl: (url: string) => string,
 ) {
-  const url = decorateUrl('/');
-  if (url.startsWith('http') && Platform.OS === 'web') {
+  const url = decorateUrl("/");
+  if (url.startsWith("http") && Platform.OS === "web") {
     window.location.href = url;
   } else {
     router.replace(url as Href);
@@ -27,9 +27,9 @@ export default function SignInScreen() {
   const { signIn, errors, fetchStatus } = useSignIn();
   const router = useRouter();
 
-  const [emailAddress, setEmailAddress] = React.useState('');
-  const [password, setPassword] = React.useState('');
-  const [code, setCode] = React.useState('');
+  const [emailAddress, setEmailAddress] = React.useState("");
+  const [password, setPassword] = React.useState("");
+  const [code, setCode] = React.useState("");
 
   const handleSubmit = async () => {
     const { error } = await signIn.password({ emailAddress, password });
@@ -38,16 +38,16 @@ export default function SignInScreen() {
       return;
     }
 
-    if (signIn.status === 'complete') {
+    if (signIn.status === "complete") {
       await signIn.finalize({
         navigate: ({ session, decorateUrl }) => {
           if (session?.currentTask) return;
           navigateAfterAuth(router, decorateUrl);
         },
       });
-    } else if (signIn.status === 'needs_client_trust') {
+    } else if (signIn.status === "needs_client_trust") {
       const emailCodeFactor = signIn.supportedSecondFactors.find(
-        (factor) => factor.strategy === 'email_code',
+        (factor) => factor.strategy === "email_code",
       );
       if (emailCodeFactor) {
         await signIn.mfa.sendEmailCode();
@@ -58,7 +58,7 @@ export default function SignInScreen() {
   const handleVerify = async () => {
     await signIn.mfa.verifyEmailCode({ code });
 
-    if (signIn.status === 'complete') {
+    if (signIn.status === "complete") {
       await signIn.finalize({
         navigate: ({ session, decorateUrl }) => {
           if (session?.currentTask) return;
@@ -68,7 +68,7 @@ export default function SignInScreen() {
     }
   };
 
-  if (signIn.status === 'needs_client_trust') {
+  if (signIn.status === "needs_client_trust") {
     return (
       <ThemedView style={styles.container}>
         <SafeAreaView style={styles.container}>
@@ -84,16 +84,19 @@ export default function SignInScreen() {
             keyboardType="numeric"
           />
           {errors.fields.code && (
-            <ThemedText style={styles.error}>{errors.fields.code.message}</ThemedText>
+            <ThemedText style={styles.error}>
+              {errors.fields.code.message}
+            </ThemedText>
           )}
           <Pressable
             style={({ pressed }) => [
               styles.button,
-              fetchStatus === 'fetching' && styles.buttonDisabled,
+              fetchStatus === "fetching" && styles.buttonDisabled,
               pressed && styles.buttonPressed,
             ]}
             onPress={handleVerify}
-            disabled={fetchStatus === 'fetching'}>
+            disabled={fetchStatus === "fetching"}
+          >
             <ThemedText style={styles.buttonText}>Verify</ThemedText>
           </Pressable>
         </SafeAreaView>
@@ -105,7 +108,7 @@ export default function SignInScreen() {
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.container}>
         <ThemedText type="title" style={styles.title}>
-          Sign in
+          Sign in.
         </ThemedText>
 
         <ThemedText style={styles.label}>Email</ThemedText>
@@ -129,7 +132,9 @@ export default function SignInScreen() {
           onChangeText={setPassword}
         />
         {errors.fields.password && (
-          <ThemedText style={styles.error}>{errors.fields.password.message}</ThemedText>
+          <ThemedText style={styles.error}>
+            {errors.fields.password.message}
+          </ThemedText>
         )}
         {errors.global?.map((err) => (
           <ThemedText key={err.code} style={styles.error}>
@@ -140,11 +145,13 @@ export default function SignInScreen() {
         <Pressable
           style={({ pressed }) => [
             styles.button,
-            (!emailAddress || !password || fetchStatus === 'fetching') && styles.buttonDisabled,
+            (!emailAddress || !password || fetchStatus === "fetching") &&
+              styles.buttonDisabled,
             pressed && styles.buttonPressed,
           ]}
           onPress={handleSubmit}
-          disabled={!emailAddress || !password || fetchStatus === 'fetching'}>
+          disabled={!emailAddress || !password || fetchStatus === "fetching"}
+        >
           <ThemedText style={styles.buttonText}>Continue</ThemedText>
         </Pressable>
 
